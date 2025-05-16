@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>useModel Hook</title>
+
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+  import {useEffect, useState, useRef} from 'react';
+  import {createRoot} from 'react-dom/client';
+  import {useModel} from '../src/index.ts';
+
+  function App(){
+    const model = useModel(0);
+    const checkbox = useModel([], 'checkbox');
+    const file = useModel(null, 'file');
+
+    useEffect(()=>{
+      console.log('挂载时', checkbox.refs);
+    }, []);
+    const [hide, setHide] = useState(false);
+
+    const ref = useRef(model);
+    if (ref.current!==model){
+      console.log('model 变化！');
+    } else {
+      console.log('model 不变');
+    }
+
+    setTimeout(()=>{
+      console.log('当前渲染的refs:', checkbox.refs);
+    }, 500);
+
+    return (
+        <div style={{textAlign:'center'}}>
+          <h1>useModel Hook</h1>
+          <h2>Counter</h2>
+          <button onClick={()=>{
+            model.latest++;
+            model.latest++;
+          }}>
+            {model.val} clicks
+          </button>
+          <h2>Checkbox</h2>
+
+          <button onClick={()=>setHide(!hide)}>
+            {hide? 'Show': 'Hide'} Checkbox
+          </button>
+          <p>Checkboxes: {checkbox.toString()}</p>
+          <p>refs: {checkbox.refs.toString()}</p>
+          <input type="checkbox" name="list" key="a" {...checkbox.bind('a')} />
+          {
+              !hide &&
+              <input type="checkbox" name="list" key="b" {...checkbox.bind('b')} />
+          }
+          <input type="checkbox" name="list" key="c" {...checkbox.bind('c')} />
+
+          <h2>File</h2>
+          <input type="file" {...file.bind()} />
+        </div>
+    );
+  }
+
+  const root = createRoot(document.getElementById('root'));
+  root.render(<App/>);
+
+</script>
+</body>
+</html>
