@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/viocha/react-use-model-hook"
+    "url": "git+https://github.com/viocha/react-use-model-hook.git"
   },
   "type": "module",
   "description": "A simple and convenient library for form binding in React.",
