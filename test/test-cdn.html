@@ -9,18 +9,20 @@
 <body>
 
 <div id="root"></div>
-<script type="module">
-  import {useState} from 'react';
-  import {createRoot} from 'react-dom/client';
+<script type="module" src="https://esm.sh/tsx"></script>
+<script type="text/babel" data-type="module">
+  import React from 'https://esm.sh/react';
+  import {createRoot} from 'https://esm.sh/react-dom/client';
+  import {useModel} from 'https://esm.sh/react-use-model-hook';
 
   function App(){
-    const [count, setCount] = useState(0);
+    const model = useModel(0);
     return (
         <>
           <div style={{textAlign:'center'}}>
             <button onClick={()=>{
-              setCount(count+1);
-            }}>  {count} clicks </button>
+              model.val++
+            }}>  {model.val} clicks </button>
 
           </div>
         </>
