@@ -28,6 +28,6 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist-pages
+          path: ./dist-web
 
       - uses: actions/deploy-pages@v4

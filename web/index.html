@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>useModel Demo</title>
 <style>
   button,
@@ -39,7 +39,7 @@
       url:useModel('http://default-url.com'),
       tel:useModel('1234567890'),
       search:useModel('default-search-value'),
-      color:useModel('#ff0000'),
+      color:useModel('#f00'),
       hidden:useModel('hidden-value'),
       date:useModel('2023-01-01'),
       time:useModel('12:00'),
@@ -77,7 +77,7 @@
                   <button onClick={defaultTypeModels[type].reset}>Reset</button>
                   <label>
                     {type}:
-                    <input type={type} {...defaultTypeModels[type].bind()} />
+                    <input type={type} {...defaultTypeModels[type].bind} />
                   </label>
                   <span>Value: {defaultTypeModels[type].val}</span>
                 </div>
@@ -88,7 +88,7 @@
           <div>
             <label>
               Textarea:
-              <textarea {...textarea.bind()} />
+              <textarea {...textarea.bind} />
             </label>
             <button onClick={textarea.reset}>Reset</button>
           </div>
@@ -100,7 +100,7 @@
             <button onClick={number.reset}>Reset</button>
             <label>
               number:
-              <input type="number" {...number.bind()} />
+              <input type="number" {...number.bind} />
             </label>
             <span>Value: {number.val}</span>
           </div>
@@ -108,7 +108,7 @@
             <button onClick={range.reset}>Reset</button>
             <label>
               range:
-              <input type="range" {...range.bind()} />
+              <input type="range" {...range.bind} />
             </label>
             <span>Value: {range.val}</span>
           </div>
@@ -116,15 +116,15 @@
           <h2> Radio Buttons</h2>
           <div>
             <label>
-              <input type="radio" {...radio.bind('1')} />
+              <input type="radio" value="1" {...radio.bind} />
               Radio 1
             </label>
             <label>
-              <input type="radio" {...radio.bind('2')} />
+              <input type="radio" value="2" {...radio.bind} />
               Radio 2
             </label>
             <label>
-              <input type="radio" {...radio.bind('3')} />
+              <input type="radio" value="3" {...radio.bind} />
               Radio 3
             </label>
             <button onClick={radio.reset}>Reset</button>
@@ -135,7 +135,7 @@
           <h3>Single Checkbox</h3>
           <div>
             <label>
-              <input type="checkbox" {...checkbox.bind()} />
+              <input type="checkbox" {...checkbox.bind} />
               Checkbox
             </label>
             <button onClick={checkbox.reset}>Reset</button>
@@ -145,15 +145,15 @@
           <h3>Checkbox Group</h3>
           <div>
             <label>
-              <input type="checkbox" {...checkboxGroup.bind('1')} />
+              <input type="checkbox" value="1" {...checkboxGroup.bind} />
               Option 1
             </label>
             <label>
-              <input type="checkbox" {...checkboxGroup.bind('2')} />
+              <input type="checkbox" value="2" {...checkboxGroup.bind} />
               Option 2
             </label>
             <label>
-              <input type="checkbox" {...checkboxGroup.bind('3')} />
+              <input type="checkbox" value="3" {...checkboxGroup.bind} />
               Option 3
             </label>
             <button onClick={checkboxGroup.reset}>Reset</button>
@@ -165,7 +165,7 @@
           <div>
             <label>
               Select:
-              <select {...select.bind()}>
+              <select {...select.bind}>
                 <option value="">Please select</option>
                 <option value="1">Option 1</option>
                 <option value="2">Option 2</option>
@@ -180,7 +180,7 @@
           <div>
             <label>
               Select Multiple:
-              <select multiple {...selectMulti.bind()}>
+              <select multiple {...selectMulti.bind}>
                 <option value="1">Option 1</option>
                 <option value="2">Option 2</option>
                 <option value="3">Option 3</option>
@@ -195,7 +195,7 @@
           <div>
             <label>
               File:
-              <input type="file" {...file.bind()} />
+              <input type="file" {...file.bind} />
             </label>
             <button onClick={file.reset}>Reset</button>
           </div>
@@ -205,7 +205,7 @@
           <div>
             <label>
               Files:
-              <input type="file" multiple {...fileMulti.bind()} />
+              <input type="file" multiple {...fileMulti.bind} />
             </label>
             <button onClick={fileMulti.reset}>Reset</button>
           </div>
@@ -215,11 +215,11 @@
           <div>
             <label>
               Text A:
-              <input type="text" {...syncModel.bind()} />
+              <input type="text" {...syncModel.bind} />
             </label>
             <label>
               Text B:
-              <input type="text" {...syncModel.bind()} />
+              <input type="text" {...syncModel.bind} />
             </label>
             <button onClick={syncModel.reset}>Reset</button>
             <span>Value: {syncModel.val}</span>

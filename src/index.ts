@@ -1,7 +1,7 @@
 import {ChangeEvent, useCallback, useEffect, useRef, useState} from 'react';
 
 type BindType =
-		| 'default'
+		| 'text'
 		| 'number'
 		| 'range'
 		| 'radio'
@@ -16,12 +16,17 @@ type InputValue =
 		| string[]
 		| File
 		| File[]
-		| null
-		| unknown // use any other type only if bind() is never called
+		| null;
 
 type Updater<T> = T | ((v: T) => T);
 
 interface Model<T = InputValue> {
+	/**
+	 * The props to bind the model with a form element.
+	 * Supports multiple calls and synchronizes the values of multiple elements. (except for file input)
+	 */
+	bind: BindProps;
+
 	// The current value of the model.
 	val: T;
 
@@ -44,25 +49,14 @@ interface Model<T = InputValue> {
 
 	// Returns the string representation of the model.
 	toString(): string;
-
-	/**
-	 * Binds the model to a form element.
-	 * Supports multiple calls and synchronizes the values of multiple elements. (except for file input)
-	 * @param optionValue Optional value to associate with multiple checkboxes or radio buttons.
-	 */
-	bind(optionValue?: string): BindProps;
 }
 
-/**
- * The props returned by the bind() method.
- * This is used to bind the model to a form element.
- * @example <input {...bind()} />
- */
+
 interface BindProps {
 	ref: (el: BindableElement | null) => void;
-	value: InputValue;
-	checked?: boolean;
 	onChange: BindableChangeHandler;
+	value?: InputValue;
+	checked?: boolean;
 }
 
 type BindableElement = ElementMap[keyof ElementMap];
@@ -81,7 +75,8 @@ type ElementMap = {
  * useModel is a custom React Hook for bidirectional form binding.
  *
  * Supported types:
- * - `default`: Applies to all text-like inputs (text, email, password, url, tel, search, hidden, color, date, time, datetime-local, week, month, textarea).
+ * - `text`: Applies to all text-like inputs (text, email, password, url, tel, search, hidden, color, date, time,
+ * datetime-local, week, month, textarea).
  *   - `initialValue`: optional or a string.
  *
  * - `number` / `range`: For numeric or range inputs.
@@ -99,11 +94,10 @@ type ElementMap = {
  */
 export function useModel<T extends InputValue>(
 		initialValue: T = '' as T,
-		type: BindType = 'default',
+		type: BindType = 'text',
 ): Model<T> {
 	const [value, setValue] = useState<T>(initialValue);
 	const [fileValue, setFileValue] = useState<string>('');
-	const [checkboxValue, setCheckboxValue] = useState<string>('on'); // for single boolean checkbox
 	const latestValue = useRef<T>(initialValue);
 	const domSet = useRef(new Set<BindableElement>());
 
@@ -128,21 +122,37 @@ export function useModel<T extends InputValue>(
 
 	// Sync DOM value to state. (e.g., color inputs might have a default value)
 	useEffect(() => {
-		if (type === 'default' || type === 'range') {
+		if (type === 'text' || type === 'range') {
 			if (model.ref) {
 				setValue(model.ref.value as T);
 			}
 		}
 	}, []);
 
-	// Sync single checkbox value with state.
+	//  state sync for radio and checkbox inputs
 	useEffect(() => {
-		if (type === 'checkbox' && typeof initialValue === 'boolean') {
-			setCheckboxValue(value ? 'on' : 'off');
+		if (type === 'radio') {
+			for (const dom of model.refs as HTMLInputElement[]) {
+				dom.checked = dom.value === value;
+			}
+		} else if (type === 'checkbox') {
+			if (typeof initialValue === 'boolean') {
+				for (const dom of model.refs as HTMLInputElement[]) {
+					dom.checked = value as boolean;
+				}
+			} else if (Array.isArray(initialValue)) {
+				for (const dom of model.refs as HTMLInputElement[]) {
+					dom.checked = (value as string[]).includes(dom.value);
+				}
+			}
 		}
+
 	}, [value]);
 
+
 	const model = new class {
+		bind = getBind();
+
 		get val() {
 			return value;
 		}
@@ -212,143 +222,142 @@ export function useModel<T extends InputValue>(
 				}
 			}
 		}
-
-		/**
-		 * Binds the model to an input element.
-		 *
-		 * @param optionValue Optional value to associate with radio/checkbox items.
-		 * @returns Binding props for a form element.
-		 */
-		bind(optionValue: string | null = null): BindProps {
-			if (type === 'default') {
-				if (typeof initialValue !== 'string') {
-					throw new Error('Initial value for type "default" must be a string.');
-				}
-
-				return {
-					ref: updateRef,
-					value,
-					onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-						setValue(e.target.value as T);
-					},
-				};
-			}
-
-			if (type === 'number' || type === 'range') {
-				if (typeof initialValue !== 'number' && initialValue !== '') {
-					throw new Error('Initial value for number/range must be a number or empty string.');
-				}
-
-				return {
-					ref: updateRef,
-					value,
-					onChange: (e: ChangeEvent<HTMLInputElement>) => {
-						setValue(Number(e.target.value) as T);
-					},
-				};
-			}
-
-			if (type === 'radio') {
-				if (optionValue === null) {
-					throw new Error('Radio type requires optionValue.');
-				}
-				if (typeof initialValue !== 'string') {
-					throw new Error('Initial value for radio must be a string.');
-				}
-
-				return {
-					ref: updateRef,
-					value: optionValue,
-					checked: value === optionValue,
-					onChange: (e: ChangeEvent<HTMLInputElement>) => {
-						setValue(e.target.value as T);
-					},
-				};
-			}
-
-			if (type === 'checkbox') {
-				if (typeof initialValue === 'boolean') {
-					if (optionValue !== null) {
-						throw new Error('Single checkbox does not require optionValue.');
-					}
-
-					return {
-						ref: updateRef,
-						value: checkboxValue,
-						checked: value as boolean,
-						onChange: (e: ChangeEvent<HTMLInputElement>) => {
-							setValue(e.target.checked as T);
-						},
-					};
-				}
-
-				if (Array.isArray(initialValue)) {
-					if (optionValue === null) {
-						throw new Error('Checkbox group requires optionValue.');
-					}
-
-					return {
-						ref: updateRef,
-						value: optionValue,
-						checked: (value as string[]).includes(optionValue),
-						onChange: (e: ChangeEvent<HTMLInputElement>) => {
-							if (e.target.checked) {
-								setValue([...value as string[], optionValue] as T);
-							} else {
-								setValue((value as string[]).filter(v => v !== optionValue) as T);
-							}
-						},
-					};
-				}
-
-				throw new Error('Checkbox initial value must be boolean or string array.');
-			}
-
-			if (type === 'select') {
-				if (typeof initialValue === 'string') {
-					return {
-						ref: updateRef,
-						value,
-						onChange: (e: ChangeEvent<HTMLSelectElement>) => {
-							setValue(e.target.value as T);
-						},
-					};
-				}
-
-				if (Array.isArray(initialValue)) {
-					return {
-						ref: updateRef,
-						value,
-						onChange: (e: ChangeEvent<HTMLSelectElement>) => {
-							const selectedOptions = [...e.target.selectedOptions].map(
-									(option: HTMLOptionElement) => option.value,
-							);
-							setValue(selectedOptions as T);
-						},
-					};
-				}
-
-				throw new Error('Select initial value must be a string or array.');
-			}
-
-			if (type === 'file') {
-				if (initialValue !== null && !(Array.isArray(initialValue) && initialValue.length === 0)) {
-					throw new Error('Initial value for file must be null or empty array.');
-				}
-				return {
-					ref: updateRef,
-					value: fileValue,
-					onChange: (e: ChangeEvent<HTMLInputElement>) => {
-						setFileValue(e.target.value);
-						const files = Array.from(e.target.files || []);
-						setValue((Array.isArray(initialValue) ? files : files[0] || null) as T);
-					},
-				};
-			}
-
-			throw new Error(`Unsupported bind type: ${type}`);
-		}
 	};
+
+	function getBind(): BindProps {
+		switch (type) {
+			case 'text':
+				return handleText();
+			case 'number':
+			case 'range':
+				return handleNumeric();
+			case 'select':
+				return handleSelect();
+			case 'file':
+				return handleFile();
+			case 'radio':
+				return handleRadio();
+			case 'checkbox':
+				return handleCheckbox();
+			default:
+				throw new Error(`Unsupported bind type: ${type}`);
+		}
+	}
+
+	function handleText(): BindProps {
+		if (typeof initialValue !== 'string') {
+			throw new Error('Initial value for type "default" must be a string.');
+		}
+
+		return {
+			ref: updateRef,
+			value,
+			onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+				setValue(e.target.value as T);
+			},
+		};
+	}
+
+	function handleNumeric(): BindProps {
+		if (typeof initialValue !== 'number' && initialValue !== '') {
+			throw new Error('Initial value for number/range must be a number or empty string.');
+		}
+
+		return {
+			ref: updateRef,
+			value,
+			onChange: (e: ChangeEvent<HTMLInputElement>) => {
+				setValue(Number(e.target.value) as T);
+			},
+		};
+
+	}
+
+	function handleSelect(): BindProps {
+		if (typeof initialValue === 'string') {
+			return {
+				ref: updateRef,
+				value,
+				onChange: (e: ChangeEvent<HTMLSelectElement>) => {
+					setValue(e.target.value as T);
+				},
+			};
+		}
+
+		if (Array.isArray(initialValue)) {
+			return {
+				ref: updateRef,
+				value,
+				onChange: (e: ChangeEvent<HTMLSelectElement>) => {
+					const selectedOptions = [...e.target.selectedOptions].map(
+							(option: HTMLOptionElement) => option.value,
+					);
+					setValue(selectedOptions as T);
+				},
+			};
+		}
+
+		throw new Error('Select initial value must be a string or array.');
+
+
+	}
+
+	function handleFile(): BindProps {
+		if (initialValue !== null && !(Array.isArray(initialValue) && initialValue.length === 0)) {
+			throw new Error('Initial value for file must be null or empty array.');
+		}
+		return {
+			ref: updateRef,
+			value: fileValue,
+			onChange: (e: ChangeEvent<HTMLInputElement>) => {
+				setFileValue(e.target.value);
+				const files = Array.from(e.target.files || []);
+				setValue((Array.isArray(initialValue) ? files : files[0] || null) as T);
+			},
+		};
+	}
+
+	function handleRadio(): BindProps {
+		if (typeof initialValue !== 'string') {
+			throw new Error('Initial value for radio must be a string.');
+		}
+
+		return {
+			ref: updateRef,
+			onChange: (e: ChangeEvent<HTMLInputElement>) => {
+				setValue(e.target.value as T);
+			},
+		};
+	}
+
+	function handleCheckbox(): BindProps {
+		if (typeof initialValue === 'boolean') {
+
+			return {
+				ref: updateRef,
+				checked: value as boolean,
+				onChange: (e: ChangeEvent<HTMLInputElement>) => {
+					setValue(e.target.checked as T);
+				},
+			};
+		}
+
+		if (Array.isArray(initialValue)) {
+
+			return {
+				ref: updateRef,
+				onChange: (e: ChangeEvent<HTMLInputElement>) => {
+					if (e.target.checked) {
+						setValue([...value as string[], e.target.value] as T);
+					} else {
+						setValue((value as string[]).filter((v) => v !== e.target.value) as T);
+					}
+				},
+			};
+		}
+
+		throw new Error('Checkbox initial value must be boolean or string array.');
+	}
 
 	return model;
 }
