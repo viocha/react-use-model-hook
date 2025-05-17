@@ -28,8 +28,7 @@
     "clean": "bash -c 'rm -rf dist'",
     "build": "npm run clean && microbundle --globals react=React",
     "build-web": "parcel build web/index.html --dist-dir dist-web",
-    "test-web": "parcel web/index.html --dist-dir /tmp --open",
-    "test-setter": "parcel test/test-setter.html --dist-dir /tmp --open"
+    "test-web": "parcel web/index.html --dist-dir /tmp --open"
   },
   "targets": {
     "module": false,
@@ -44,6 +43,7 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/react": "^19.1.4",
+    "microbundle": "^0.15.1",
     "parcel": "^2.15.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
